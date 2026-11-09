@@ -262,8 +262,10 @@ def test_project_and_all_targets_registered():
     ]
     assert isinstance(build_enumerator, ProjectBuildTargetEnumerator)
     assert isinstance(test_enumerator, ProjectBuildTargetEnumerator)
+    assert build_enumerator.build_file_name == "build-targets.fprime-util"
     assert test_enumerator.build_file_name == "tests.fprime-util"
     all_check = Target.get_target("check", {"all"})
+    assert len(all_check.targets) == 2
     for target in all_check.targets:
         assert isinstance(target.build_target_enumerator, SpecificBuildTargetEnumerator)
 

@@ -53,7 +53,7 @@ Target.register_target(
 Target.register_target(
     BuildSystemTarget(
         mnemonic="build",
-        desc="Build the project's targets as recorded at the build cache root (currently equivalent to --all; narrows to the project and its dependencies with the F Prime EXCLUDE_FROM_ALL change), from any directory within the project",
+        desc="Build the targets the framework records at the build cache root, from any directory within the project (today the framework records the `all` target, so this matches --all; it may record a narrower project set in future)",
         scope=TargetScope.GLOBAL,
         flags={"project"},
         # The project's targets are listed at the root of the build cache
@@ -101,7 +101,7 @@ Target.register_target(
 Target.register_target(
     BuildSystemTarget(
         mnemonic="build",
-        desc="Build the project, its dependencies, and its unit tests from any directory within the project (unit test build)",
+        desc="Build the targets the framework records at the build cache root, from any directory within the project (unit test build; today this is the `all` target and matches --all --ut)",
         scope=TargetScope.GLOBAL,
         flags={"project", "ut"},
         build_type=BuildType.BUILD_TESTING,
@@ -170,7 +170,7 @@ Target.register_target(
 Target.register_target(
     CheckTarget(
         mnemonic="check",
-        desc="Build and run the project's unit tests from any directory within the project (unit test build)",
+        desc="Build and run the unit tests the framework records at the build cache root, from any directory within the project (unit test build; today this is every test and matches --all)",
         scope=TargetScope.GLOBAL,
         flags={"project"},
         build_type=BuildType.BUILD_TESTING,
