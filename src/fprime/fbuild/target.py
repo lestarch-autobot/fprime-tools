@@ -11,11 +11,10 @@ import itertools
 from abc import ABC, abstractmethod
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set, Tuple, Union
 
 from .enumerator import BuildTargetEnumerator, EnumeratedContext
 from .types import BuildType, NoSuchTargetException
-
 
 ExecuteContext = Path
 """ Context for execute calls (execute, is_supported) which represents the path where the target is being executed """
@@ -366,28 +365,35 @@ class BuildSystemTarget(Target):
         context_with_path: EnumeratedContext,
         args: Tuple[Dict[str, str], List[str], Dict[str, bool]],
     ):
-        # Ensure the cache is refreshed
+        """Execute all enumerated build targets
+
+        The cache is refreshed first. Then every enumerated build target is handed to the build system in a single
+        invocation such that the build tool schedules them together, rather than walking the dependency graph once per
+        target. Duplicate targets (e.g. from recursive enumeration) are removed while preserving order.
+        """
         context, _ = context_with_path
-        context = ["refresh_cache"] + context
-        for build_target in context:
-            if builder.is_verbose():
-                print(f"[INFO] Building: {build_target}")
-            self.execute_one(builder, build_target, args)
+        self.execute_one(builder, "refresh_cache", args)
+        build_targets = list(dict.fromkeys(context))
+        if not build_targets:
+            return
+        if builder.is_verbose():
+            print(f"[INFO] Building: {', '.join(build_targets)}")
+        self.execute_one(builder, build_targets, args)
 
     def execute_one(
         self,
         builder: "Build",
-        build_target: str,
+        build_target: Union[str, List[str]],
         args: Tuple[Dict[str, str], List[str], Dict[str, bool]],
     ):
-        """Execute a build target
+        """Execute a build target, or a list of build targets in one build system invocation
 
         Executes a target within the build system. This will execute the target by calling into the build system.
         Context is supplied such that the system can match local targets to the global target list.
 
         Args:
             builder: builder to execute target with
-            build_target: build target to execute
+            build_target: build target, or list of build targets, to execute
             args: make system arguments directly supplied
         """
         # This assert guards against the old style calls through this function. It will catch when the refactor was

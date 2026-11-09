@@ -3,7 +3,7 @@ Tests for fprime.fbuild.target
 """
 
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, call
 
 import pytest
 
@@ -207,3 +207,54 @@ def test_check_coverage_existing_targets_gcovr_only():
         assert isinstance(target, ExistingCoverageTarget)
         assert len(target.targets) == 1
         assert isinstance(target.targets[0], Gcovr)
+
+
+def test_build_system_target_execute_all_batches(mock_builder):
+    """Test that execute_all refreshes the cache, then hands every target to one build system call"""
+    target = BuildSystemTarget("build", "", TargetScope.LOCAL)
+    target.original_context = Path(".")
+    mock_builder.is_verbose.return_value = False
+
+    target.execute_all(
+        mock_builder, (["Mod_a", "Mod_b", "Mod_a", "Sub_c"], Path(".")), ({}, [], {})
+    )
+
+    assert mock_builder.execute_build_target.call_args_list == [
+        call("refresh_cache", Path("."), {}),
+        call(["Mod_a", "Mod_b", "Sub_c"], Path("."), {}),
+    ]
+
+
+def test_build_system_target_execute_all_empty(mock_builder):
+    """Test that execute_all with no enumerated targets only refreshes the cache"""
+    target = BuildSystemTarget("build", "", TargetScope.LOCAL)
+    target.original_context = Path(".")
+    mock_builder.is_verbose.return_value = False
+
+    target.execute_all(mock_builder, ([], Path(".")), ({}, [], {}))
+
+    mock_builder.execute_build_target.assert_called_once_with(
+        "refresh_cache", Path("."), {}
+    )
+
+
+def test_project_and_all_targets_registered():
+    """Test --project targets exist alongside the unchanged --all targets"""
+    import fprime.fbuild.target_definitions  # noqa: F401 registers the targets
+    from fprime.fbuild.enumerator import (
+        ProjectBuildTargetEnumerator,
+        SpecificBuildTargetEnumerator,
+    )
+
+    all_build = Target.get_target("build", {"all"})
+    assert isinstance(all_build.build_target_enumerator, SpecificBuildTargetEnumerator)
+    assert all_build.build_target_enumerator.enumerate(MagicMock(), Path("."))[0] == [
+        "all"
+    ]
+    for flags in ({"project"}, {"project", "ut"}):
+        project_build = Target.get_target("build", flags)
+        assert isinstance(
+            project_build.build_target_enumerator, ProjectBuildTargetEnumerator
+        )
+    assert Target.get_target("check", {"project"}) is not None
+    assert Target.get_target("check", {"all"}) is not None

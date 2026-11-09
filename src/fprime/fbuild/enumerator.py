@@ -15,7 +15,6 @@ from typing import List, Tuple
 
 from .types import MissingBuildCachePath
 
-
 EnumeratedContext = Tuple[List[str], Path]
 """ Context for enumeration calls (execute_all, any_supported) """
 
@@ -160,6 +159,37 @@ class RecursiveMultiBuildTargetEnumerator(BuildTargetEnumerator):
             else self.directory_enumerator.enumerate(builder, context_path)[0]
         )
         return enumerated_targets, context_path
+
+
+class ProjectBuildTargetEnumerator(BuildTargetEnumerator):
+    """Enumerates the project-level targets regardless of the contextual path
+
+    The build system writes the project's own targets (e.g. "all") and tests into the metadata files at the root of the
+    build cache. This enumerator reads those root files so that a project build may be requested from any directory
+    within the project. Falls back to the supplied targets when the root metadata does not exist (older build caches).
+    """
+
+    def __init__(
+        self,
+        build_file_name: str = MultiBuildTargetEnumerator.BUILD_TARGETS_FILE,
+        fallback_targets: List[str] = None,
+    ):
+        self.build_file_name = build_file_name
+        self.fallback_targets = (
+            ["all"] if fallback_targets is None else fallback_targets
+        )
+
+    def enumerate(self, builder: "Build", context_path: Path) -> EnumeratedContext:
+        """Enumerate the targets listed at the root of the build cache; context is the root (None)"""
+        targets_file = Path(builder.build_dir) / self.build_file_name
+        try:
+            with open(targets_file, "r") as file_handle:
+                enumerated_targets = [
+                    line.strip() for line in file_handle.readlines() if line.strip()
+                ]
+        except FileNotFoundError:
+            enumerated_targets = list(self.fallback_targets)
+        return enumerated_targets, None
 
 
 class SpecificBuildTargetEnumerator(BuildTargetEnumerator):
