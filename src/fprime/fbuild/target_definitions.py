@@ -53,7 +53,7 @@ Target.register_target(
 Target.register_target(
     BuildSystemTarget(
         mnemonic="build",
-        desc="Build the project and everything it depends on, from any directory within the project",
+        desc="Build the project's targets as recorded at the build cache root (currently equivalent to --all; narrows to the project and its dependencies with the F Prime EXCLUDE_FROM_ALL change), from any directory within the project",
         scope=TargetScope.GLOBAL,
         flags={"project"},
         # The project's targets are listed at the root of the build cache

@@ -255,3 +255,5 @@ def test_project_enumeration_fallback(tmp_path):
     assert enumerator.enumerate(builder_mock, tmp_path) == (["all"], None)
     custom = ProjectBuildTargetEnumerator(fallback_targets=["Ref"])
     assert custom.enumerate(builder_mock, tmp_path) == (["Ref"], None)
+    (tmp_path / "build-targets.fprime-util").write_text("\n")
+    assert enumerator.enumerate(builder_mock, tmp_path) == (["all"], None)

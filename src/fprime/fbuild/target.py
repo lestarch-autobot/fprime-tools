@@ -365,11 +365,13 @@ class BuildSystemTarget(Target):
         context_with_path: EnumeratedContext,
         args: Tuple[Dict[str, str], List[str], Dict[str, bool]],
     ):
-        """Execute all enumerated build targets
+        """Execute all enumerated build targets as a single build-system invocation
 
-        The cache is refreshed first. Then every enumerated build target is handed to the build system in a single
-        invocation such that the build tool schedules them together, rather than walking the dependency graph once per
-        target. Duplicate targets (e.g. from recursive enumeration) are removed while preserving order.
+        Refreshes the cache once, de-duplicates the enumerated targets (recursive enumeration may repeat them) while
+        preserving order, and hands them all to one ``cmake --build`` call. This removes the per-target ``cmake --build``
+        process and cache check for every generator; with Ninja the build tool additionally schedules independent
+        targets together (CMake-generated Makefiles are ``.NOTPARALLEL`` at the top level and build the requested
+        targets one after another).
         """
         context, _ = context_with_path
         self.execute_one(builder, "refresh_cache", args)

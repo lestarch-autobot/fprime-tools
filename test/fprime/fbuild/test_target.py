@@ -256,5 +256,24 @@ def test_project_and_all_targets_registered():
         assert isinstance(
             project_build.build_target_enumerator, ProjectBuildTargetEnumerator
         )
-    assert Target.get_target("check", {"project"}) is not None
-    assert Target.get_target("check", {"all"}) is not None
+    project_check = Target.get_target("check", {"project"})
+    build_enumerator, test_enumerator = [
+        target.build_target_enumerator for target in project_check.targets
+    ]
+    assert isinstance(build_enumerator, ProjectBuildTargetEnumerator)
+    assert isinstance(test_enumerator, ProjectBuildTargetEnumerator)
+    assert test_enumerator.build_file_name == "tests.fprime-util"
+    all_check = Target.get_target("check", {"all"})
+    for target in all_check.targets:
+        assert isinstance(target.build_target_enumerator, SpecificBuildTargetEnumerator)
+
+
+def test_build_system_target_execute_all_verbose(mock_builder, capsys):
+    """Test that the verbose path lists every batched target once"""
+    target = BuildSystemTarget("build", "", TargetScope.LOCAL)
+    target.original_context = Path(".")
+    mock_builder.is_verbose.return_value = True
+
+    target.execute_all(mock_builder, (["Mod_a", "Mod_b"], Path(".")), ({}, [], {}))
+
+    assert "[INFO] Building: Mod_a, Mod_b" in capsys.readouterr().out

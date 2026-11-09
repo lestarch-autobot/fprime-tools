@@ -66,7 +66,7 @@ class Check(EnumeratedAction):
             # and neither '--all' nor '--recursive' were provided
             raise NoTargetFoundException(
                 "No tests were found in the given context. Did you mean to "
-                "use `fprime-util check --recursive` or `--all` ?"
+                "use `fprime-util check --recursive`, `--project`, or `--all` ?"
             )
 
         cli_args = [
