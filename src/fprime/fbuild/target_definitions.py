@@ -130,8 +130,8 @@ Target.register_target(
             check_multi_build_enumerator,
             check_multi_test_enumerator,
         ],
-        # At the project root the project's tests are run by label when the framework labels them
-        root_label_cache_variable=Check.PROJECT_LABEL_CACHE_VARIABLE,
+        # The label applies at the project root only: there the project's tests are run by label
+        label_cache_variable=Check.PROJECT_LABEL_CACHE_VARIABLE,
     )
 )
 

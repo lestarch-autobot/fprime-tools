@@ -117,11 +117,11 @@ def test_execute_all_label_fallback(tmp_path):
 
 
 def test_execute_all_root_label(tmp_path):
-    """Test the root label applies at the root of the build cache only (check in a directory)"""
+    """Test the label applies at the root of the build cache only (check in a directory)"""
     from fprime.fbuild.target import TargetScope
 
     check = Check(
-        TargetScope.LOCAL, root_label_cache_variable=Check.PROJECT_LABEL_CACHE_VARIABLE
+        TargetScope.LOCAL, label_cache_variable=Check.PROJECT_LABEL_CACHE_VARIABLE
     )
     cache = {Check.PROJECT_LABEL_CACHE_VARIABLE: "fprime_project"}
     cli_args = _run_check(tmp_path, check, (["A_ut_exe"], tmp_path), cache)
